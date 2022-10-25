@@ -1,29 +1,40 @@
 use std::path::Path;
 
-use clap::Parser;
+use clap::{Parser, Subcommand};
 
 use scissors::{api, markdown, subprocess};
 
 #[derive(Parser, Debug)]
 struct Cli {
-    /// Client ID
-    #[arg(short, long)]
-    id: i32,
-
-    /// Client Secret
-    #[arg(short, long)]
-    secret: String,
-
-    /// Files for checking. Either a list of paths, space-separated, or "auto"
-    #[arg(short, long, use_value_delimiter = true, value_delimiter = ',')]
-    files: Vec<String>,
+    /// Type of test to perform
+    #[command(subcommand)]
+    action: Action,
 }
 
-fn main() {
-    let args = Cli::parse();
+#[derive(Subcommand, Debug, Clone)]
+enum Action {
+    Users {
+        /// Client ID
+        #[arg(short, long)]
+        id: i32,
 
-    let files = if !args.files.is_empty() {
-        args.files
+        /// Client secret
+        #[arg(short, long)]
+        secret: String,
+
+        /// Files for checking. Either a list of comma-separated paths, or "auto" (uses `git diff`)
+        #[arg(short, long, use_value_delimiter = true, value_delimiter = ',')]
+        files: Vec<String>,
+
+        //
+        #[arg(short, long, default_value_t = false)]
+        required: bool,
+    },
+}
+
+fn test_users(id: i32, secret: &str, files: Vec<String>, required: bool) {
+    let files = if !files.is_empty() {
+        files
     } else {
         let branch = subprocess::git_oneline(&["branch", "--show-current"])
             .expect("git branch failed")
@@ -56,8 +67,7 @@ fn main() {
         .collect()
     };
 
-    let token =
-        osu_api::get_client_token(args.id, &args.secret).expect("Failed to fetch guest API token");
+    let token = osu_api::get_client_token(id, secret).expect("Failed to fetch guest API token");
 
     for filename in files {
         let path = Path::new(&filename);
@@ -89,7 +99,11 @@ fn main() {
                     );
                 }
                 match &mention.country_code {
-                    None => print!(" missing country code (wanted: {})", user_data.country_code),
+                    None => {
+                        if !required {
+                            print!(" missing country code (wanted: {})", user_data.country_code)
+                        }
+                    }
                     Some(country_code) => {
                         if country_code.text != user_data.country_code {
                             print!(
@@ -103,5 +117,18 @@ fn main() {
             }
             println!();
         }
+    }
+}
+
+fn main() {
+    let args = Cli::parse();
+
+    match args.action {
+        Action::Users {
+            id,
+            secret,
+            files,
+            required,
+        } => test_users(id, &secret, files, required),
     }
 }
