@@ -8,6 +8,5 @@ edition = "2021"
 [dependencies]
 clap = { version = "4.0.15", features = ["derive"] }
 serde = "1.0"
-osu-api = { git = "ssh://git@github.com/TicClick/osu-api" }
-pulldown-cmark = { version = "0.9.2", default-features = false }
+osu-api = { git = "https://github.com/TicClick/osu-api" }
 regex = "1.6.0"
