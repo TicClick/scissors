@@ -28,11 +28,15 @@ enum Action {
 
         /// Detect flags that are missing near user profiles (off by default)
         #[arg(short, long)]
-        required: bool,
+        flags: bool,
+
+        /// Detect username mismatches (off by default)
+        #[arg(short, long)]
+        names: bool,
     },
 }
 
-fn test_users(id: i32, secret: &str, files: Vec<String>, required: bool) {
+fn test_users(id: i32, secret: &str, files: Vec<String>, country_required: bool, name_required: bool) {
     let files = if !files.is_empty() {
         files
     } else {
@@ -85,14 +89,14 @@ fn test_users(id: i32, secret: &str, files: Vec<String>, required: bool) {
         let canonical_data = api::fetch_user_data(&token, &ids);
         let bad_mentions: Vec<&markdown::UserMention> = all_mentions
             .iter()
-            .filter(|m| !canonical_data[&m.id.num].valid(m))
+            .filter(|m| !canonical_data[&m.id.num].valid(m, country_required, name_required))
             .collect();
         if !bad_mentions.is_empty() {
             println!("--- {}: {} error(s)", filename, bad_mentions.len());
             for mention in bad_mentions {
                 let user_data = &canonical_data[&mention.id.num];
                 print!("\t{} (line {}):", user_data.username, mention.id.loc.line);
-                if user_data.username != mention.username.text {
+                if name_required && user_data.username != mention.username.text {
                     print!(
                         " wrong username (wanted: {}, got: {})",
                         user_data.username, mention.username.text
@@ -100,7 +104,7 @@ fn test_users(id: i32, secret: &str, files: Vec<String>, required: bool) {
                 }
                 match &mention.country_code {
                     None => {
-                        if !required {
+                        if country_required {
                             print!(" missing country code (wanted: {})", user_data.country_code)
                         }
                     }
@@ -128,7 +132,8 @@ fn main() {
             id,
             secret,
             files,
-            required,
-        } => test_users(id, &secret, files, required),
+            flags,
+            names,
+        } => test_users(id, &secret, files, flags, names),
     }
 }

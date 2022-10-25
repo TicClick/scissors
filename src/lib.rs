@@ -17,15 +17,13 @@ pub enum Field {
 }
 
 impl User {
-    pub fn valid(&self, mention: &markdown::UserMention) -> bool {
-        if self.username == mention.username.text {
+    pub fn valid(&self, mention: &markdown::UserMention, country_required: bool, name_required: bool) -> bool {
+        (!name_required || self.username == mention.username.text) && {
             if let Some(country) = &mention.country_code {
                 self.country_code == country.text
             } else {
-                false
+                !country_required
             }
-        } else {
-            false
-        }
     }
+}
 }

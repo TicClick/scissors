@@ -20,4 +20,7 @@ Compare chunks like below against the data from osu! API and verify country code
 ::{ flag=CA }:: [71cCl1ck](https://osu.ppy.sh/users/672931)
 ```
 
-To check for missing flags, pass `--required`.
+Switches:
+
+- `--flags`: check for missing flags
+- `--names`: check for name mismatch
