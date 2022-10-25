@@ -14,20 +14,20 @@ struct Cli {
 #[derive(Subcommand, Debug, Clone)]
 enum Action {
     Users {
-        /// Client ID
+        /// OAuth app ID
         #[arg(short, long)]
         id: i32,
 
-        /// Client secret
+        /// OAuth app secret
         #[arg(short, long)]
         secret: String,
 
-        /// Files for checking. Either a list of comma-separated paths, or "auto" (uses `git diff`)
+        /// Files to check. Either a list of comma-separated paths, or "auto" (uses `git diff`)
         #[arg(short, long, use_value_delimiter = true, value_delimiter = ',')]
         files: Vec<String>,
 
-        //
-        #[arg(short, long, default_value_t = false)]
+        /// Detect flags that are missing near user profiles (off by default)
+        #[arg(short, long)]
         required: bool,
     },
 }
