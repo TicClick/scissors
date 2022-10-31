@@ -94,36 +94,38 @@ fn test_users(id: i32, secret: &str, files: Vec<String>, country_required: bool,
             .iter()
             .filter(|m| !canonical_data[&m.id.num].valid(m, country_required, name_required))
             .collect();
-        if !bad_mentions.is_empty() {
-            println!("--- {}: {} error(s)", filename, bad_mentions.len());
-            for mention in bad_mentions {
-                let user_data = &canonical_data[&mention.id.num];
-                print!("\t{} (line {}):", user_data.username, mention.id.loc.line);
-                if name_required && user_data.username != mention.username.text {
-                    print!(
-                        " wrong username (wanted: {}, got: {})",
-                        user_data.username, mention.username.text
-                    );
-                }
-                match &mention.country_code {
-                    None => {
-                        if country_required {
-                            print!(" missing country code (wanted: {})", user_data.country_code)
-                        }
-                    }
-                    Some(country_code) => {
-                        if country_code.text != user_data.country_code {
-                            print!(
-                                " wrong country code (wanted: {}, got: {})",
-                                user_data.country_code, country_code.text
-                            );
-                        }
+        if bad_mentions.is_empty() {
+            println!("--- {}: ok", filename);
+            continue;
+        }
+        println!("--- {}: {} error(s)", filename, bad_mentions.len());
+        for mention in bad_mentions {
+            let user_data = &canonical_data[&mention.id.num];
+            print!("\t{} (line {}):", user_data.username, mention.id.loc.line);
+            if name_required && user_data.username != mention.username.text {
+                print!(
+                    " wrong username (wanted: {}, got: {})",
+                    user_data.username, mention.username.text
+                );
+            }
+            match &mention.country_code {
+                None => {
+                    if country_required {
+                        print!(" missing country code (wanted: {})", user_data.country_code)
                     }
                 }
-                println!();
+                Some(country_code) => {
+                    if country_code.text != user_data.country_code {
+                        print!(
+                            " wrong country code (wanted: {}, got: {})",
+                            user_data.country_code, country_code.text
+                        );
+                    }
+                }
             }
             println!();
         }
+        println!();
     }
 }
 
