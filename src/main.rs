@@ -5,6 +5,7 @@ use clap::{Parser, Subcommand};
 use scissors::{api, markdown, subprocess};
 
 #[derive(Parser, Debug)]
+#[command(version)]
 struct Cli {
     /// Type of test to perform
     #[command(subcommand)]
