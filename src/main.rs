@@ -87,6 +87,8 @@ fn test_users(id: i32, secret: &str, files: Vec<String>, country_required: bool,
         all_mentions.sort_by_key(|m| (m.id.loc.line, m.id.loc.ch));
 
         let canonical_data = api::fetch_user_data(&token, &ids);
+        // filter out restricted users (API returns no data for them)
+        all_mentions = all_mentions.into_iter().filter(|e| canonical_data.contains_key(&e.id.num)).collect();
         let bad_mentions: Vec<&markdown::UserMention> = all_mentions
             .iter()
             .filter(|m| !canonical_data[&m.id.num].valid(m, country_required, name_required))
