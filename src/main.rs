@@ -24,7 +24,6 @@ enum Action {
         secret: String,
 
         /// Files to check. Either a list of comma-separated paths, or "auto" (uses `git diff`)
-        #[arg(short, long, use_value_delimiter = true, value_delimiter = ',')]
         files: Vec<String>,
 
         /// Detect flags that are missing near user profiles (off by default)
