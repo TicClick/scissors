@@ -23,7 +23,7 @@ enum Action {
         #[arg(short, long)]
         secret: String,
 
-        /// Files to check. Either a list of comma-separated paths, or "auto" (uses `git diff`)
+        /// Files to check (pass them as regular arguments, not flags). If omitted, use `git diff`
         files: Vec<String>,
 
         /// Detect flags that are missing near user profiles (off by default)
@@ -44,7 +44,7 @@ fn test_users(id: i32, secret: &str, files: Vec<String>, country_required: bool,
             .expect("git branch failed")
             .unwrap();
         if branch == "master" {
-            panic!("please run the tool from a feature branch, or use \"--files path1,path2\"")
+            panic!("please run the tool from a feature branch, or pass file paths as command line arguments")
         }
 
         let first_commit = subprocess::git_oneline(&[
