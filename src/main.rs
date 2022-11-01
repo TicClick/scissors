@@ -1,4 +1,7 @@
-use std::path::Path;
+use std::{
+    collections::{HashMap, HashSet},
+    path::Path,
+};
 
 use clap::{Parser, Subcommand};
 
@@ -36,7 +39,13 @@ enum Action {
     },
 }
 
-fn test_users(id: i32, secret: &str, files: Vec<String>, country_required: bool, name_required: bool) {
+fn test_users(
+    id: i32,
+    secret: &str,
+    files: Vec<String>,
+    country_required: bool,
+    name_required: bool,
+) {
     let files = if !files.is_empty() {
         files
     } else {
@@ -72,31 +81,39 @@ fn test_users(id: i32, secret: &str, files: Vec<String>, country_required: bool,
     };
 
     let token = osu_api::get_client_token(id, secret).expect("Failed to fetch guest API token");
+    let mut contents = HashMap::<&String, Vec<markdown::UserMention>>::new();
+    let mut user_ids = HashSet::<i32>::new();
 
-    for filename in files {
-        let path = Path::new(&filename);
-        let article = markdown::Article::read(path).expect("failed to read the article");
-
+    for filename in &files {
+        let article =
+            markdown::Article::read(Path::new(&filename)).expect("failed to read the article");
         let mut all_mentions = vec![];
-        let mut ids = vec![];
-        article.get_user_profiles().drain().for_each(|mut e| {
-            ids.push(e.0);
+        article.get_user_profiles().into_iter().for_each(|mut e| {
+            user_ids.insert(e.0);
             all_mentions.append(&mut e.1);
         });
-        ids.sort();
         all_mentions.sort_by_key(|m| (m.id.loc.line, m.id.loc.ch));
+        contents.insert(filename, all_mentions);
+    }
 
-        let canonical_data = api::fetch_user_data(&token, &ids);
-        // filter out restricted users (API returns no data for them)
-        all_mentions = all_mentions.into_iter().filter(|e| canonical_data.contains_key(&e.id.num)).collect();
-        let bad_mentions: Vec<&markdown::UserMention> = all_mentions
+    let user_ids = user_ids.into_iter().collect::<Vec<i32>>();
+    let canonical_data = api::fetch_user_data(&token, &user_ids);
+
+    for filename in &files {
+        let bad_mentions: Vec<&markdown::UserMention> = contents[filename]
             .iter()
-            .filter(|m| !canonical_data[&m.id.num].valid(m, country_required, name_required))
+            .filter(|mention| {
+                // filter out restricted users (API returns no data for them)
+                canonical_data.get(&mention.id.num).map_or(false, |m| {
+                    !m.valid(mention, country_required, name_required)
+                })
+            })
             .collect();
+
         if bad_mentions.is_empty() {
-            println!("--- {}: ok", filename);
             continue;
         }
+
         println!("--- {}: {} error(s)", filename, bad_mentions.len());
         for mention in bad_mentions {
             let user_data = &canonical_data[&mention.id.num];
@@ -126,6 +143,11 @@ fn test_users(id: i32, secret: &str, files: Vec<String>, country_required: bool,
         }
         println!();
     }
+    println!(
+        "Checked {} mention(s) in {} file(s)",
+        contents.values().map(|m| m.len()).sum::<usize>(),
+        files.len()
+    )
 }
 
 fn main() {
