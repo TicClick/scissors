@@ -117,7 +117,12 @@ fn test_users(
         println!("--- {}: {} error(s)", filename, bad_mentions.len());
         for mention in bad_mentions {
             let user_data = &canonical_data[&mention.id.num];
-            print!("\t{} (line {}):", user_data.username, mention.id.loc.line);
+            print!(
+                "\t{} (line {}, char {}):",
+                mention.username.text,
+                mention.id.loc.line + 1,
+                mention.id.loc.ch + 1
+            );
             if name_required && user_data.username != mention.username.text {
                 print!(
                     " wrong username (wanted: {}, got: {})",
@@ -136,6 +141,9 @@ fn test_users(
                             " wrong country code (wanted: {}, got: {})",
                             user_data.country_code, country_code.text
                         );
+                        if user_data.username != mention.username.text {
+                            print!(" wrong profile link?")
+                        }
                     }
                 }
             }

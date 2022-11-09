@@ -54,7 +54,11 @@ pub fn fetch_user_data(token: &str, users: &[i32]) -> std::collections::HashMap<
         let api = osu_api::new(token.to_owned());
 
         if limit.remaining <= USER_LIMIT as i32 {
-            eprint!("* Waiting for osu! API to stop throttling us");
+            eprint!(
+                "* Waiting for osu! API to stop throttling us ({}/{})",
+                start,
+                users.len()
+            );
             while limit.remaining <= USER_LIMIT as i32 {
                 // Sleep for extra requests allowed (usually 20/s),
                 // provided they are replenished with sub-second frequency on the server side.
