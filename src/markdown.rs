@@ -105,7 +105,7 @@ impl Article<'_> {
         )??\ +?
         \[
             (?P<username_dirty>
-                .+?
+                [a-zA-Z0-9- \]\[]+?
             )
         \]
         \(
